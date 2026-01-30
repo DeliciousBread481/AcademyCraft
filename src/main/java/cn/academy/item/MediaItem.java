@@ -1,5 +1,8 @@
 package cn.academy.item;
 
+import cn.lambdalib2.util.SideUtils;
+import scala.collection.Seq;
+
 import cn.academy.AcademyCraft;
 import cn.academy.misc.media.Media;
 import cn.academy.misc.media.MediaAcquireData;
@@ -40,6 +43,11 @@ public class MediaItem extends Item
             TerminalData tData = TerminalData.get(player);
 
             Media media = getMedia(stack.getItemDamage());
+            
+            if (media == null) {
+                player.sendMessage(new TextComponentTranslation("ac.media.invalid"));
+                return new ActionResult<>(EnumActionResult.FAIL, stack);
+            }
 
             if (!tData.isInstalled(MediaApp$.MODULE$))
             {
@@ -66,14 +74,21 @@ public class MediaItem extends Item
     @Override
     public String getItemStackDisplayName(ItemStack stack)
     {
-        return getMedia(stack.getItemDamage()).name();
+        Media media = getMedia(stack.getItemDamage());  
+        if (media != null) {
+            return media.name();
+        }
+        return "Unknown Media";
     }
 
     @SideOnly(Side.CLIENT)
     @Override
     public void addInformation(ItemStack stack, World world, List<String> tooltip, ITooltipFlag flag)
     {
-        tooltip.add(getMedia(stack.getItemDamage()).desc());
+        Media media = getMedia(stack.getItemDamage());
+        if (media != null) {
+            tooltip.add(media.desc());
+        }
     }
 
     @Override
@@ -88,8 +103,12 @@ public class MediaItem extends Item
         }
     }
 
-    private Media getMedia(int damage)
+    private Media getMedia(int damage)  
     {
-        return MediaManager.allMedias().apply(damage);
+        Seq<Media> medias = MediaManager.allMedias();
+        if (medias != null && damage >= 0 && damage < medias.size()) {
+            return medias.apply(damage);
+        }
+        return null;  
     }
 }
